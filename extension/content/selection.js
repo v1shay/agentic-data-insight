@@ -1,19 +1,25 @@
-/**
- * Captures highlighted text on the page and sends it to the extension.
- */
+console.log("[INSIGHT] content script loaded");
+
+let port = null;
+
+function getPort() {
+  if (!port) {
+    port = chrome.runtime.connect({ name: "adi-port" });
+  }
+  return port;
+}
 
 document.addEventListener("mouseup", () => {
   const selection = window.getSelection();
-  const selectedText = selection ? selection.toString().trim() : "";
+  const text = selection ? selection.toString().trim() : "";
+  if (!text) return;
 
-  if (!selectedText) return;
+  console.log("[INSIGHT] Selected text:", text);
 
-  console.log("[ADI] Selected text:", selectedText);
-
-  chrome.runtime.sendMessage({
+  getPort().postMessage({
     type: "TEXT_SELECTED",
     payload: {
-      text: selectedText,
+      text,
       url: window.location.href,
       title: document.title
     }

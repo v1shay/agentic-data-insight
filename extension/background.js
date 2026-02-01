@@ -1,9 +1,9 @@
-/**
- * Background service worker for Agentic Data Insight
- */
+console.log(" BACKGROUND SERVICE WORKER LOADED 🔥");
 
-chrome.runtime.onMessage.addListener((message, sender) => {
-  if (message.type === "TEXT_SELECTED") {
-    console.log("[ADI Background] Received selection:", message.payload);
-  }
+chrome.runtime.onInstalled.addListener(() => {
+  console.log("onInstalled fired");
+});
+
+chrome.runtime.onStartup.addListener(() => {
+  console.log("onStartup fired");
 });
