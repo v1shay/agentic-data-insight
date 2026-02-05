@@ -20,8 +20,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   switch (message.type) {
     case "TEXT_SELECTED":
-      // Centralized handling point for selection data
-      // (AI + vision will plug in here later)
       console.log("[ADI BG] Text received:", message.payload);
 
       // Store latest selection for UI hydration
@@ -29,11 +27,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         lastSelection: message.payload
       });
 
-      // Forward to panel (if open)
+      // Forward to panel (popup listeners)
       chrome.runtime.sendMessage({
         type: "SELECTION_UPDATED",
         payload: message.payload
       });
+
+      // 🔹 NEW: trigger analysis when coming from runtime channel
+      analyzeSelection(message.payload);
 
       // Acknowledge receipt (prevents MV3 race errors)
       sendResponse({ ok: true });
@@ -43,16 +44,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       console.warn("[ADI BG] Unknown message:", message.type);
   }
 
-  // REQUIRED in MV3 if sendResponse is used
   return true;
 });
 
 /* ------------------------------------------------------------------
-   ADDITIONS BELOW — MV3 PORT + ANALYSIS PIPELINE
-   (NO CHANGES ABOVE)
+   MV3 PORT + ANALYSIS PIPELINE (ORIGINAL STRUCTURE PRESERVED)
 ------------------------------------------------------------------- */
 
-// Persistent ports (content scripts / panel)
+// Persistent ports (content scripts)
 const ports = new Set();
 
 // Handle long-lived connections (MV3-safe)
@@ -71,7 +70,7 @@ chrome.runtime.onConnect.addListener((port) => {
         lastSelection: msg.payload
       });
 
-      // Fan-out to all connected contexts
+      // Fan-out selection update to port listeners
       ports.forEach((p) => {
         try {
           p.postMessage({
@@ -83,7 +82,13 @@ chrome.runtime.onConnect.addListener((port) => {
         }
       });
 
-      // OPTIONAL: backend hook (stub-safe)
+      // ALSO notify popup listeners (NEW — fixes UI hang)
+      chrome.runtime.sendMessage({
+        type: "SELECTION_UPDATED",
+        payload: msg.payload
+      });
+
+      // Trigger backend analysis
       analyzeSelection(msg.payload);
     }
   });
@@ -100,12 +105,12 @@ async function analyzeSelection(payload) {
     const response = await fetch("http://localhost:8000/analyze", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ text: payload.text })
     });
 
     const result = await response.json();
 
-    // Broadcast analysis results
+    // Broadcast analysis results to PORT listeners (original behavior)
     ports.forEach((p) => {
       try {
         p.postMessage({
@@ -116,7 +121,23 @@ async function analyzeSelection(payload) {
         console.warn("[ADI BG] Analysis broadcast failed", e);
       }
     });
+
+    // 🔑 NEW: also broadcast to popup via runtime channel
+    chrome.runtime.sendMessage({
+      type: "ANALYSIS_RESULT",
+      payload: result
+    });
+
   } catch (err) {
     console.warn("[ADI BG] Analysis unavailable", err);
+
+    // 🔑 NEW: fail gracefully instead of infinite "Analyzing…"
+    chrome.runtime.sendMessage({
+      type: "ANALYSIS_RESULT",
+      payload: {
+        summary: "Analysis failed",
+        insights: ["Backend unavailable or error occurred"]
+      }
+    });
   }
 }
