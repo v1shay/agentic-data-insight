@@ -107,6 +107,12 @@ async function analyzeSelection(payload) {
 
     const result = await response.json();
 
+    // Persist for UI hydration when panel opens later
+    chrome.storage.local.set({
+      lastAnalysis: result,
+      lastAnalysisAt: Date.now(),
+    });
+
     ports.forEach((p) => {
       try {
         p.postMessage({
@@ -130,6 +136,11 @@ async function analyzeSelection(payload) {
     const errorPayload = {
       message: "Backend not running or request timed out"
     };
+
+    chrome.storage.local.set({
+      lastAnalysisError: errorPayload,
+      lastAnalysisAt: Date.now(),
+    });
 
     ports.forEach((p) => {
       try {
