@@ -4,14 +4,18 @@
   "version": "0.1.0",
   "description": "...",
 
-  "permissions": ["activeTab", "storage"],
+  "permissions": [
+    "storage"
+  ],
+
   "host_permissions": [
     "http://127.0.0.1:8000/*",
     "http://localhost:8000/*"
   ],
 
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
 
   "action": {
@@ -24,5 +28,9 @@
       "matches": ["<all_urls>"],
       "js": ["content/selection.js"]
     }
-  ]
+  ],
+
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; connect-src http://127.0.0.1:8000 http://localhost:8000"
+  }
 }
