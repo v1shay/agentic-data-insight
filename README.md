@@ -52,7 +52,7 @@ neural-lens/
 ## Install
 
 ```bash
-git clone https://github.com/your-username/neural-lens.git
+git clone https://github.com/v1shay/neural-lens.git
 cd neural-lens
 npm install
 ```
