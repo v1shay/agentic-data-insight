@@ -1,3 +1,4 @@
+
 <div align="center">
 
 # Neural Lens
@@ -5,7 +6,7 @@
 ### Select once, understand instantly
 
 
-<img width="800" height="500" alt="Neural Lens demo" src="https://github.com/user-attachments/assets/cf898fbf-8441-4a4e-ab77-c363b2fe0b93" />
+<img width="800" height="500" alt="Adobe Express - neurallens (1)" src="https://github.com/user-attachments/assets/5c5854f4-6cba-4e47-a2bd-999c65fd90bd" />
 
 ---
 
